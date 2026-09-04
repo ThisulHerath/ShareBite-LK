@@ -1,87 +1,128 @@
 import { useEffect, useState } from 'react'
-import { getCurrentUser, loginUser, registerUser } from './services/api'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import LandingPage from './pages/LandingPage'
+import ProblemPage from './pages/ProblemPage'
+import { CreateListingForm, ListingBrowser } from './features/listings'
+import StatusState from './components/StatusState'
+import Header from './components/Header'
+import { apiErrorMessage, createListing, getCurrentUser, getListings, loginUser, registerUser, reserveListing } from './services/api'
 import './App.css'
+import './styles/sharebite.css'
 
-const storedSession = () => JSON.parse(localStorage.getItem('hacka1-session') || 'null')
+const sessionKey = 'sharebite-session'
+const storedSession = () => {
+  try { return JSON.parse(localStorage.getItem(sessionKey) || localStorage.getItem('hacka1-session') || 'null') } catch { return null }
+}
+const withId = (listing) => ({ ...listing, id: listing.id || listing._id })
 
-function App() {
-  const [session, setSession] = useState(storedSession)
-  const [mode, setMode] = useState('login')
+function AuthPage({ session, onSession }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const isRegister = location.pathname === '/register'
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!session?.token) return
-    getCurrentUser(session.token)
-      .then(({ data }) => setSession((currentSession) => {
-        const nextSession = { ...currentSession, user: data.user }
-        localStorage.setItem('hacka1-session', JSON.stringify(nextSession))
-        return nextSession
-      }))
-      .catch(() => {
-        localStorage.removeItem('hacka1-session')
-        setSession(null)
-      })
-  }, [session?.token])
-
-  const saveSession = (nextSession) => {
-    localStorage.setItem('hacka1-session', JSON.stringify(nextSession))
-    setSession(nextSession)
-  }
-
-  const logout = () => {
-    localStorage.removeItem('hacka1-session')
-    setSession(null)
-  }
+  if (session?.user) return <Navigate to="/" replace />
 
   const submit = async (event) => {
-    event.preventDefault()
-    setMessage('')
-    setLoading(true)
+    event.preventDefault(); setLoading(true); setMessage('')
     try {
-      const request = mode === 'login' ? loginUser : registerUser
-      const { data } = await request(form)
-      saveSession(data)
-      setForm({ name: '', email: '', password: '' })
-    } catch (error) {
-      setMessage(error.response?.data?.message || 'Unable to connect to the server.')
-    } finally {
-      setLoading(false)
-    }
+      const { data } = await (isRegister ? registerUser(form) : loginUser(form))
+      onSession(data)
+      navigate(location.state?.from?.pathname || '/')
+    } catch (error) { setMessage(apiErrorMessage(error, 'We could not sign you in.')) } finally { setLoading(false) }
   }
-
-  if (session?.user) {
-    return (
-      <main className="home">
-        <nav><span>Hacka1</span><button onClick={logout}>Log out</button></nav>
-        <section>
-          <p className="eyebrow">WELCOME BACK</p>
-          <h1>Hello, {session.user.name}.</h1>
-          <p>You are signed in and ready to build your hackathon project.</p>
-          <div className="placeholder"><h2>Your homepage starts here</h2><p>Replace this card with your team’s main feature tomorrow.</p></div>
-        </section>
-      </main>
-    )
-  }
-
-  return (
-    <main className="auth-page">
-      <section className="auth-card">
-        <p className="eyebrow">HACKA1 STARTER</p>
-        <h1>{mode === 'login' ? 'Welcome back' : 'Create your account'}</h1>
-        <p className="subtitle">{mode === 'login' ? 'Sign in to view your dashboard.' : 'Register to get started.'}</p>
-        <form onSubmit={submit}>
-          {mode === 'register' && <label>Name<input required minLength="2" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>}
-          <label>Email<input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
-          <label>Password<input required type="password" minLength="6" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></label>
-          {message && <p className="error">{message}</p>}
-          <button className="primary" disabled={loading}>{loading ? 'Please wait…' : mode === 'login' ? 'Log in' : 'Create account'}</button>
-        </form>
-        <p className="switch">{mode === 'login' ? 'New here?' : 'Already have an account?'} <button onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setMessage('') }}>{mode === 'login' ? 'Register' : 'Log in'}</button></p>
-      </section>
-    </main>
-  )
+  return <main className="auth-page"><section className="auth-card">
+    <p className="eyebrow">SHAREBITE LK</p><h1>{isRegister ? 'Create your account' : 'Welcome back'}</h1>
+    <p className="subtitle">{isRegister ? 'Register to share or reserve safe surplus food.' : 'Sign in to share food or reserve a listing.'}</p>
+    <form onSubmit={submit}>
+      {isRegister && <label>Name<input required minLength="2" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>}
+      <label>Email<input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
+      <label>Password<input required type="password" minLength="6" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></label>
+      {message && <p className="error" role="alert">{message}</p>}
+      <button className="primary" disabled={loading}>{loading ? 'Please wait…' : isRegister ? 'Create account' : 'Log in'}</button>
+    </form>
+    <p className="switch">{isRegister ? 'Already have an account?' : 'New here?'} <button onClick={() => navigate(isRegister ? '/login' : '/register')}>{isRegister ? 'Log in' : 'Register'}</button></p>
+  </section></main>
 }
 
-export default App
+function ListingsPage({ session, onExpired, onLogout }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [listings, setListings] = useState([])
+  const [state, setState] = useState('loading')
+  const [feedback, setFeedback] = useState(null)
+  const [reservingId, setReservingId] = useState('')
+  const load = async () => {
+    setState('loading'); setFeedback(null)
+    try {
+      const { data } = await getListings()
+      const next = (data.listings || []).map(withId)
+      setListings(next); setState(next.length ? 'ready' : 'empty')
+    } catch (error) { setFeedback({ type: 'error', text: apiErrorMessage(error) }); setState('error') }
+  }
+  useEffect(() => { void Promise.resolve().then(load) }, [])
+  const reserve = async (listing) => {
+    if (!session?.token) { navigate('/login', { state: { from: location } }); return }
+    if (reservingId) return
+    setReservingId(listing.id); setFeedback(null)
+    try {
+      const { data } = await reserveListing(listing.id, session.token)
+      const updated = withId(data.listing)
+      setListings((current) => current.map((item) => item.id === updated.id ? updated : item))
+      setFeedback({ type: 'success', text: `Reserved “${updated.title}”. Please collect it before the listed time.` })
+    } catch (error) {
+      if (error.response?.status === 401) { onExpired(); navigate('/login', { state: { from: location } }); return }
+      setFeedback({ type: 'error', text: apiErrorMessage(error, 'We could not reserve this listing.') })
+    } finally { setReservingId('') }
+  }
+  return <div className="site-page"><Header user={session?.user} onLogout={onLogout} /><main className="listing-page shell">
+    <p className="kicker">Available nearby</p><h1>Find food to collect</h1><p className="listing-intro">Browse safe surplus food shared by local businesses and reserve what you can collect on time.</p>
+    {feedback && state !== 'error' && <StatusState type={feedback.type}>{feedback.text}</StatusState>}
+    {state === 'loading' && <StatusState type="loading" />}
+    {state === 'error' && <StatusState type="error" action={<button className="retry-button" onClick={load}>Try again</button>}>{feedback?.text}</StatusState>}
+    {state === 'empty' && <StatusState type="empty" />}
+    {state === 'ready' && <ListingBrowser listings={listings} onReserve={reserve} reserveDisabled={Boolean(reservingId)} />}
+  </main></div>
+}
+
+function ShareFoodPage({ session, onExpired, onLogout }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  if (!session?.token) return <Navigate to="/login" replace state={{ from: location }} />
+  const submit = async (listing) => {
+    try { await createListing(listing, session.token) }
+    catch (error) {
+      if (error.response?.status === 401) { onExpired(); navigate('/login', { state: { from: location } }); throw new Error('Your session has expired. Please log in again.', { cause: error }) }
+      throw new Error(apiErrorMessage(error, 'We could not create this listing.'), { cause: error })
+    }
+  }
+  return <div className="site-page"><Header user={session?.user} onLogout={onLogout} /><main className="listing-page form-page shell"><p className="kicker">Share safe surplus</p><h1>Post food for your community</h1><p className="listing-intro">Only list food that is safe to collect and consume before the stated deadline.</p><CreateListingForm onSubmit={submit} /></main></div>
+}
+
+export default function App() {
+  const [session, setSession] = useState(storedSession)
+  const token = session?.token
+  const save = (next) => { localStorage.setItem(sessionKey, JSON.stringify(next)); setSession(next) }
+  const logout = () => { localStorage.removeItem(sessionKey); setSession(null) }
+  useEffect(() => {
+    if (!token) return
+    getCurrentUser(token).then(({ data }) => {
+      setSession((current) => {
+        const next = { ...current, user: data.user }
+        localStorage.setItem(sessionKey, JSON.stringify(next))
+        return next
+      })
+    }).catch(logout)
+  }, [token])
+  const shared = { user: session?.user, onLogout: logout }
+  return <Routes>
+    <Route path="/" element={<LandingPage {...shared} />} />
+    <Route path="/find-food" element={<ListingsPage session={session} onExpired={logout} onLogout={logout} />} />
+    <Route path="/share-food" element={<ShareFoodPage session={session} onExpired={logout} onLogout={logout} />} />
+    <Route path="/about" element={<ProblemPage {...shared} />} />
+    <Route path="/login" element={<AuthPage session={session} onSession={save} />} />
+    <Route path="/register" element={<AuthPage session={session} onSession={save} />} />
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
+}
