@@ -13,6 +13,7 @@ export default function LandingPage({ user, onLogout }) {
       <Header user={user} onLogout={onLogout} />
       <main>
         <section className="hero">
+          <div className="ambient-blob blob-coral" aria-hidden="true" /><div className="ambient-blob blob-lime" aria-hidden="true" />
           <div className="shell hero-grid">
             <div className="hero-copy">
               <p className="kicker">A kinder way to share food</p>
@@ -44,7 +45,7 @@ export default function LandingPage({ user, onLogout }) {
         <section className="how-it-works section section-tint">
           <div className="shell">
             <div className="section-heading"><div><p className="kicker">How it works</p><h2>From surplus to shared in three steps.</h2></div><a href="/about" className="text-link">Why ShareBite LK? <span>→</span></a></div>
-            <ol className="steps">
+            <ol className="steps reveal-stagger">
               {steps.map(([number, title, text]) => <li key={title}><span className="step-number">{number}</span><h3>{title}</h3><p>{text}</p></li>)}
             </ol>
           </div>
@@ -53,7 +54,7 @@ export default function LandingPage({ user, onLogout }) {
         <section className="impact section">
           <div className="shell impact-grid">
             <div><p className="kicker">What sharing can do</p><h2>Local food deserves a local second chance.</h2><p>Every listing can help a business reduce avoidable waste, help a neighbour access food, and help a community build more thoughtful habits around what we already have.</p></div>
-            <div className="impact-cards" aria-label="Potential impacts of food sharing">
+            <div className="impact-cards reveal-stagger" aria-label="Potential impacts of food sharing">
               <article><span aria-hidden="true">♻</span><h3>Less waste</h3><p>Keep safe, usable food in circulation.</p></article>
               <article><span aria-hidden="true">♥</span><h3>More access</h3><p>Make nearby food easier to discover.</p></article>
               <article><span aria-hidden="true">⌂</span><h3>Stronger communities</h3><p>Build helpful local connections.</p></article>
