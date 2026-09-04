@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
+import PageBackground from '../components/PageBackground'
 
 const audiences = [
   {
@@ -22,7 +23,8 @@ const audiences = [
 
 export default function ProblemPage({ user, token, onLogout }) {
   return (
-    <div style={{ backgroundColor: '#FFFAF0', color: '#173A35', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', overflowX: 'hidden' }}>
+    <div style={{ backgroundColor: '#FFFAF0', color: '#173A35', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', overflowX: 'hidden', position: 'relative' }}>
+      <PageBackground variant="default" />
       
       {/* KEYFRAME ANIMATIONS FOR FLOATING DECORATIONS */}
       <style>{`

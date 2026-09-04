@@ -6,6 +6,7 @@ import { CreateListingForm, ListingBrowser } from './features/listings'
 import StatusState from './components/StatusState'
 import Header from './components/Header'
 import CountdownTimer from './components/CountdownTimer'
+import PageBackground from './components/PageBackground'
 import { getRemainingTimeBreakdown } from './utils/timeUtils'
 import {
   apiErrorMessage,
@@ -82,7 +83,8 @@ function AuthPage({ session, onSession }) {
   }
 
   return (
-    <div style={pageStyle}>
+    <div style={{ ...pageStyle, position: 'relative' }}>
+      <PageBackground variant="auth" />
       <Header />
       <main
         style={{
@@ -303,9 +305,10 @@ function ListingsPage({ session, onExpired, onLogout }) {
   }
 
   return (
-    <div style={pageStyle}>
+    <div style={{ ...pageStyle, position: 'relative' }}>
+      <PageBackground variant="listings" />
       <Header user={session.user} token={session.token} onLogout={onLogout} />
-      <main style={containerStyle}>
+      <main style={{ ...containerStyle, position: 'relative', zIndex: 1 }}>
         <span style={{ color: '#176B59', fontWeight: '700', fontSize: '0.875rem', textTransform: 'uppercase' }}>
           Available Today
         </span>
@@ -647,9 +650,10 @@ function DashboardPage({ session, onLogout }) {
     : 'ShareBite member'
 
   return (
-    <div style={pageStyle}>
+    <div style={{ ...pageStyle, position: 'relative' }}>
+      <PageBackground variant="dashboard" />
       <Header user={user} token={session.token} onLogout={onLogout} />
-      <main style={containerStyle}>
+      <main style={{ ...containerStyle, position: 'relative', zIndex: 1 }}>
         {/* User Hero Banner */}
         <section
           style={{
@@ -982,9 +986,10 @@ function ShareFoodPage({ session, onExpired, onLogout }) {
   }
 
   return (
-    <div style={pageStyle}>
+    <div style={{ ...pageStyle, position: 'relative' }}>
+      <PageBackground variant="share" />
       <Header user={session.user} token={session.token} onLogout={onLogout} />
-      <main style={{ padding: '40px 24px' }}>
+      <main style={{ padding: '40px 24px', position: 'relative', zIndex: 1 }}>
         <CreateListingForm onSubmit={submit} />
       </main>
     </div>
