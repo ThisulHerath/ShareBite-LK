@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
 import ProblemPage from './pages/ProblemPage'
@@ -87,7 +87,8 @@ function AuthPage({ session, onSession }) {
     <div style={{ ...pageStyle, position: 'relative' }}>
       <PageBackground variant="auth" />
       <Header />
-      <main
+        <main
+          className="auth-main-shell"
         style={{
           maxWidth: '1000px',
           margin: '0 auto',
@@ -309,7 +310,7 @@ function ListingsPage({ session, onExpired, onLogout }) {
     <div style={{ ...pageStyle, position: 'relative' }}>
       <PageBackground variant="listings" />
       <Header user={session.user} token={session.token} onLogout={onLogout} />
-      <main style={{ ...containerStyle, position: 'relative', zIndex: 1 }}>
+      <main className="listings-main-shell" style={{ ...containerStyle, position: 'relative', zIndex: 1 }}>
         <span style={{ color: '#176B59', fontWeight: '700', fontSize: '0.875rem', textTransform: 'uppercase' }}>
           Available Today
         </span>
@@ -560,7 +561,7 @@ function DashboardPage({ session, onLogout }) {
   const [deletingId, setDeletingId] = useState('')
   const [editingListing, setEditingListing] = useState(null)
 
-  const loadActivity = async () => {
+  const loadActivity = useCallback(async () => {
     if (!session?.token) return
     try {
       const { data } = await getMyListings(session.token)
@@ -572,11 +573,11 @@ function DashboardPage({ session, onLogout }) {
     } catch {
       setActivityState('error')
     }
-  }
+  }, [session])
 
   useEffect(() => {
-    void loadActivity()
-  }, [session?.token])
+    void Promise.resolve().then(loadActivity)
+  }, [loadActivity])
 
   if (!session?.token) return <Navigate to="/login" replace state={{ from: { pathname: '/dashboard' } }} />
 
@@ -654,7 +655,7 @@ function DashboardPage({ session, onLogout }) {
     <div style={{ ...pageStyle, position: 'relative' }}>
       <PageBackground variant="dashboard" />
       <Header user={user} token={session.token} onLogout={onLogout} />
-      <main style={{ ...containerStyle, position: 'relative', zIndex: 1 }}>
+      <main className="dashboard-main-shell" style={{ ...containerStyle, position: 'relative', zIndex: 1 }}>
         {/* User Hero Banner */}
         <section
           style={{
@@ -990,7 +991,7 @@ function ShareFoodPage({ session, onExpired, onLogout }) {
     <div style={{ ...pageStyle, position: 'relative' }}>
       <PageBackground variant="share" />
       <Header user={session.user} token={session.token} onLogout={onLogout} />
-      <main style={{ padding: '40px 24px', position: 'relative', zIndex: 1 }}>
+      <main className="share-main-shell" style={{ padding: '40px 24px', position: 'relative', zIndex: 1 }}>
         <CreateListingForm onSubmit={submit} />
       </main>
     </div>

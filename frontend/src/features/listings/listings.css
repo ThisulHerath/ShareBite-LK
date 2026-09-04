@@ -9,6 +9,25 @@
 .sb-form-row { display: flex; flex-direction: column; gap: 7px; margin-bottom: 17px; }.sb-form-row label { color: var(--ink); font-size: .9rem; font-weight: 700; }.sb-form-row input, .sb-form-row select, .sb-form-row textarea { width: 100%; padding: 12px 13px; border: 1px solid #b9ccc0; border-radius: 8px; color: var(--ink); background: #fff; font: inherit; }.sb-form-row input:focus, .sb-form-row select:focus, .sb-form-row textarea:focus { border-color: var(--green); outline: 0; box-shadow: 0 0 0 3px #176b591c; }.sb-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }.sb-form-grid.category-portions { grid-template-columns: 1fr 160px; }.sb-submit-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 7px; }.sb-error { color: #b13c28; font-size: .85rem; font-weight: 600; }.sb-success { color: #087347; font-size: .9rem; font-weight: 600; }
 @media (max-width: 560px) { .sb-form-grid, .sb-form-grid.category-portions { grid-template-columns: 1fr; }.sb-filter-controls > * { flex: 1 1 140px; }.sb-listings-grid { grid-template-columns: 1fr; } }
 
+@media (max-width: 700px) {
+	.sb-search-container { padding: 18px; border-radius: 18px; }
+	.sb-search-header { align-items: flex-start; }
+	.sb-search-label-group p { line-height: 1.4; }
+	.sb-filter-row { align-items: stretch; flex-direction: column; }
+	.sb-filter-chips-group, .sb-district-row { align-items: stretch; flex-direction: column; }
+	.sb-filter-label { margin-bottom: 2px; }
+	.sb-category-chip, .sb-district-select, .sb-reset-btn { justify-content: center; width: 100%; }
+	.sb-results-bar { align-items: flex-start; flex-direction: column; }
+	.sb-filter-summary { flex-wrap: wrap; }
+}
+
+@media (max-width: 390px) {
+	.sb-search-container { padding: 14px; }
+	.sb-search-label-group h3 { font-size: .95rem; }
+	.sb-search-label-group p { font-size: .74rem; }
+	.sb-search-input { font-size: .9rem; }
+}
+
 /* Card imagery is decorative; listing data and controls remain unchanged. */
 .sb-listing-card { position:relative; min-height:310px; padding:14px 19px 19px; border-radius:20px; background:#fffdf8d9; overflow:hidden; transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease; }.sb-listing-card:hover { border-color:var(--coral); transform:translateY(-6px) scale(1.02); box-shadow:0 22px 42px #173a3526; }
 .sb-card-illustration { position:relative; display:grid; place-items:center; height:104px; margin:-14px -19px 14px; overflow:hidden; border-radius:18px 18px 12px 12px; background:linear-gradient(135deg,#d9ed89,#b9dcb7); }.sb-card-illustration.category-bakery { background:linear-gradient(135deg,#f6c760,#f7ad77); }.sb-card-illustration.category-produce { background:linear-gradient(135deg,#b9e6c6,#d9ed89); }.sb-card-illustration span { position:relative; z-index:1; font-size:3.25rem; filter:drop-shadow(0 8px 7px #104c4033); transform:rotate(-8deg); }.sb-card-illustration i { position:absolute; width:150px; height:150px; border:13px solid #fff5; border-radius:42% 58% 50% 50%; transform:translate(35px,36px) rotate(25deg); }

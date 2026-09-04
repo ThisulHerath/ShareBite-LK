@@ -1,4 +1,44 @@
 :root { font-family: Inter, system-ui, sans-serif; color: #1e293b; background: #102e2a; font-synthesis: none; }
 * { box-sizing: border-box; }
 html, body, #root { min-height: 100%; background: #102e2a; }
-body { margin: 0; }
+body { margin: 0; overflow-x: hidden; }
+img, svg { max-width: 100%; }
+button, input, select, textarea { max-width: 100%; }
+
+@media (max-width: 760px) {
+	.auth-main-shell,
+	.listings-main-shell,
+	.dashboard-main-shell,
+	.share-main-shell { width: 100%; padding-inline: 16px !important; }
+
+	.auth-main-shell { padding-block: 36px !important; }
+	.auth-intro h1 { font-size: clamp(2.35rem, 12vw, 3.5rem) !important; }
+	.auth-card { padding: 24px !important; }
+
+	.site-page main [style*='grid-template-columns'],
+	main [style*='grid-template-columns'] { grid-template-columns: 1fr !important; }
+	main [style*='minmax(320px'] { grid-template-columns: 1fr !important; }
+
+	.listings-main-shell h1 { font-size: clamp(2rem, 10vw, 2.7rem) !important; }
+	.dashboard-main-shell > section:first-of-type { align-items: flex-start !important; flex-direction: column !important; padding: 20px !important; }
+	.dashboard-main-shell > section:first-of-type h1 { font-size: 1.45rem !important; }
+	.dashboard-main-shell article { min-width: 0; }
+	.dashboard-main-shell ul { min-width: 0; }
+
+	.share-main-shell { padding-block: 24px !important; }
+	.share-main-shell form { padding: 24px !important; }
+
+	main section[style*='padding: 96px'] { padding-block: 60px !important; }
+	main section[style*='padding: 80px'] { padding-block: 56px 42px !important; }
+	main section[style*='padding: 60px'] { padding-block: 44px 60px !important; }
+	main section h2 { font-size: clamp(1.8rem, 8vw, 2.35rem) !important; }
+	main section h1 { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 430px) {
+	.auth-card { padding: 20px !important; }
+	.auth-card h2 { font-size: 1.65rem !important; }
+	.dashboard-main-shell > section:first-of-type { margin-bottom: 20px !important; }
+	.dashboard-main-shell article { padding: 18px !important; }
+	.dashboard-main-shell a { max-width: 100%; overflow-wrap: anywhere; }
+}

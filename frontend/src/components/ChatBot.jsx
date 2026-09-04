@@ -117,6 +117,10 @@ export default function ChatBot() {
         .sb-chat-window {
           animation: sb-chat-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
+        @media (max-width: 560px) {
+          .sb-chat-fab { right: 16px !important; bottom: 16px !important; width: 54px !important; height: 54px !important; }
+          .sb-chat-window { right: 12px !important; bottom: 82px !important; width: calc(100vw - 24px) !important; max-height: calc(100vh - 100px) !important; border-radius: 18px !important; }
+        }
         .sb-chat-msg { transition: all 0.2s; }
         .sb-typing-dot {
           width: 8px; height: 8px; border-radius: 50%;
