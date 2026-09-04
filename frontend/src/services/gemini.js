@@ -5,6 +5,7 @@
  */
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-3.6-flash'
 
 // System prompt that defines the assistant's persona and knowledge
 export const SYSTEM_PROMPT = `You are ShareBite LK Assistant, a friendly and helpful AI chatbot for the ShareBite LK food-sharing platform in Sri Lanka.
@@ -41,7 +42,7 @@ You speak English but can understand Sinhala or Tamil queries — respond in Eng
 
 /**
  * Send a message to Gemini and get a response.
- * Uses the gemini-2.0-flash-lite model via the Gemini REST API.
+ * Uses a configurable Gemini Flash model via the Gemini REST API.
  * @param {Array<{role: 'user'|'model', text: string}>} history - conversation history
  * @param {string} userMessage - the new user message
  * @returns {Promise<string>} - the assistant's reply
@@ -82,7 +83,7 @@ export async function sendMessage(history, userMessage) {
     },
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
 
   const response = await fetch(url, {
     method: 'POST',
@@ -103,6 +104,9 @@ export async function sendMessage(history, userMessage) {
     }
     if (status === 429) {
       throw new Error('Rate limit reached. Please wait a moment and try again.')
+    }
+    if (status === 404 || apiMsg.toLowerCase().includes('no longer available')) {
+      throw new Error(`The configured Gemini model (${GEMINI_MODEL}) is unavailable. Update VITE_GEMINI_MODEL and restart the frontend.`)
     }
     throw new Error(apiMsg || `API error ${status}. Please try again.`)
   }
