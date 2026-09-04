@@ -18,8 +18,14 @@ export const getMyListings = (token) =>
   api.get('/api/listings/mine', { headers: { Authorization: `Bearer ${token}` } })
 export const createListing = (listing, token) =>
   api.post('/api/listings', listing, { headers: { Authorization: `Bearer ${token}` } })
-export const reserveListing = (id, token) =>
-  api.patch(`/api/listings/${id}/reserve`, {}, { headers: { Authorization: `Bearer ${token}` } })
+export const updateListing = (id, listing, token) =>
+  api.put(`/api/listings/${id}`, listing, { headers: { Authorization: `Bearer ${token}` } })
+export const deleteListing = (id, token) =>
+  api.delete(`/api/listings/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+export const reserveListing = (id, portions = 1, token) =>
+  api.patch(`/api/listings/${id}/reserve`, { portions }, { headers: { Authorization: `Bearer ${token}` } })
+export const cancelReservation = (id, token) =>
+  api.patch(`/api/listings/${id}/cancel-reservation`, {}, { headers: { Authorization: `Bearer ${token}` } })
 
 export const apiErrorMessage = (error, fallback = 'Something went wrong. Please try again.') => {
   if (!error.response) return 'Unable to reach the server. Check your connection and try again.'

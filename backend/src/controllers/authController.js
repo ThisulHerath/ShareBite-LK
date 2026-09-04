@@ -60,6 +60,18 @@ const deleteAccount = async (req, res, next) => {
     if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ message: 'Password is incorrect.' })
 
     const Listing = require('../models/Listing')
+    const listingsWithUserRes = await Listing.find({ 'reservations.user': req.userId })
+    for (const item of listingsWithUserRes) {
+      const userRes = item.reservations.filter((r) => r.user?.toString() === req.userId)
+      const restored = userRes.reduce((sum, r) => sum + (r.portions || 0), 0)
+      item.reservations = item.reservations.filter((r) => r.user?.toString() !== req.userId)
+      item.remainingPortions = Math.min(item.totalPortions || item.portions, (item.remainingPortions || 0) + restored)
+      item.portions = item.remainingPortions
+      item.status = 'available'
+      if (item.reservations.length === 0) item.reservedBy = null
+      await item.save()
+    }
+
     await Promise.all([
       Listing.deleteMany({ sharedBy: req.userId }),
       Listing.updateMany({ reservedBy: req.userId }, { $set: { reservedBy: null, status: 'available' } }),
