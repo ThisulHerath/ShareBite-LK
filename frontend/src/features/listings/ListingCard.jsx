@@ -9,7 +9,7 @@ function formatDateTime(iso) {
 }
 
 export default function ListingCard({ listing, onReserve, reserveDisabled }) {
-  const { title, category, district, pickupAddress, availableUntil, status } = listing
+  const { title, category, district, pickupAddress, contactPhone, availableUntil, status } = listing
   const total = listing.totalPortions ?? listing.portions ?? 1
   const remaining = listing.remainingPortions ?? (status === 'reserved' ? 0 : (listing.portions ?? 0))
   
@@ -42,7 +42,7 @@ export default function ListingCard({ listing, onReserve, reserveDisabled }) {
           <b aria-hidden="true">{icons[category] || icons.Other}</b>
           {category}
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div className="sb-card-status">
           <CountdownTimer targetDate={availableUntil} compact />
           <span className={`sb-badge ${isAvailable ? 'sb-available' : 'sb-reserved'}`}>
             {isExpired ? 'Expired' : isAvailable ? 'Available' : 'Reserved'}
@@ -64,6 +64,7 @@ export default function ListingCard({ listing, onReserve, reserveDisabled }) {
         </div>
 
         <p>⌖ {pickupAddress}</p>
+        {contactPhone && <p>☎ Contact: <strong>{contactPhone}</strong></p>}
         <p>◷ Collect by <strong>{formatDateTime(availableUntil)}</strong> today</p>
       </div>
 
