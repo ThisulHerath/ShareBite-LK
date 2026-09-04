@@ -8,10 +8,10 @@ const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const sampleListings = () => {
   const daysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000)
   return [
-    { title: 'Fresh bread and pastries', description: 'Safe, same-day bakery items available after the afternoon rush.', category: 'Bakery', portions: 18, district: 'Colombo', pickupAddress: 'Flower Road, Colombo 07', availableUntil: daysFromNow(2) },
-    { title: 'Rice and curry meal packs', description: 'Vegetarian meal packs prepared today and kept safely for pickup.', category: 'Meals', portions: 12, district: 'Kandy', pickupAddress: 'Peradeniya Road, Kandy', availableUntil: daysFromNow(2) },
-    { title: 'Seasonal fruit and vegetables', description: 'Clean surplus produce including bananas, beans, and leafy greens.', category: 'Produce', portions: 25, district: 'Galle', pickupAddress: 'Hirimbura Road, Galle', availableUntil: daysFromNow(3) },
-    { title: 'Catering rice portions', description: 'Unserved catering portions from a daytime event, ready for collection.', category: 'Meals', portions: 30, district: 'Jaffna', pickupAddress: 'Hospital Road, Jaffna', availableUntil: daysFromNow(2) },
+    { title: 'Fresh bread and pastries', description: 'Safe, same-day bakery items available after the afternoon rush.', category: 'Bakery', portions: 18, district: 'Colombo', pickupAddress: 'Flower Road, Colombo 07', contactPhone: '+94112345678', availableUntil: daysFromNow(2) },
+    { title: 'Rice and curry meal packs', description: 'Vegetarian meal packs prepared today and kept safely for pickup.', category: 'Meals', portions: 12, district: 'Kandy', pickupAddress: 'Peradeniya Road, Kandy', contactPhone: '+94812345678', availableUntil: daysFromNow(2) },
+    { title: 'Seasonal fruit and vegetables', description: 'Clean surplus produce including bananas, beans, and leafy greens.', category: 'Produce', portions: 25, district: 'Galle', pickupAddress: 'Hirimbura Road, Galle', contactPhone: '+94912345678', availableUntil: daysFromNow(3) },
+    { title: 'Catering rice portions', description: 'Unserved catering portions from a daytime event, ready for collection.', category: 'Meals', portions: 30, district: 'Jaffna', pickupAddress: 'Hospital Road, Jaffna', contactPhone: '+94212345678', availableUntil: daysFromNow(2) },
   ]
 }
 
@@ -23,6 +23,7 @@ const validateListing = (body) => {
     portions: body.portions,
     district: typeof body.district === 'string' ? body.district.trim() : '',
     pickupAddress: typeof body.pickupAddress === 'string' ? body.pickupAddress.trim() : '',
+    contactPhone: typeof body.contactPhone === 'string' ? body.contactPhone.trim() : '',
     availableUntil: body.availableUntil,
   }
 
@@ -32,6 +33,7 @@ const validateListing = (body) => {
   if (!Number.isInteger(listing.portions) || listing.portions < 1 || listing.portions > 500) return { message: 'Portions must be a whole number between 1 and 500.' }
   if (!listing.district) return { message: 'District is required.' }
   if (listing.pickupAddress.length < 5 || listing.pickupAddress.length > 200) return { message: 'Pickup address must be between 5 and 200 characters.' }
+  if (!/^\+?[0-9\s-]{9,15}$/.test(listing.contactPhone)) return { message: 'Enter a valid phone number (9–15 digits).' }
   const availableUntil = new Date(listing.availableUntil)
   if (Number.isNaN(availableUntil.getTime()) || availableUntil <= new Date()) return { message: 'Available until must be a future date and time.' }
 
@@ -66,8 +68,18 @@ const createListing = async (req, res, next) => {
   try {
     const { listing, message } = validateListing(req.body)
     if (message) return res.status(400).json({ message })
-    const createdListing = await Listing.create({ ...listing, status: 'available' })
+    const createdListing = await Listing.create({ ...listing, status: 'available', sharedBy: req.userId })
     return res.status(201).json({ listing: createdListing })
+  } catch (error) { next(error) }
+}
+
+const getMyListings = async (req, res, next) => {
+  try {
+    const [shared, reserved] = await Promise.all([
+      Listing.find({ sharedBy: req.userId }).sort({ createdAt: -1 }),
+      Listing.find({ reservedBy: req.userId }).sort({ createdAt: -1 }),
+    ])
+    return res.json({ shared, reserved })
   } catch (error) { next(error) }
 }
 
@@ -75,7 +87,7 @@ const reserveListing = async (req, res, next) => {
   try {
     const listing = await Listing.findOneAndUpdate(
       { _id: req.params.id, status: 'available' },
-      { status: 'reserved' },
+      { status: 'reserved', reservedBy: req.userId },
       { new: true },
     )
     if (!listing) {
@@ -91,4 +103,4 @@ const reserveListing = async (req, res, next) => {
   }
 }
 
-module.exports = { createListing, getListings, reserveListing }
+module.exports = { createListing, getListings, getMyListings, reserveListing }

@@ -1,122 +1,39 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './listings.css';
 
-const initial = {
-  title: '', description: '', category: '', portions: '', district: '', pickupAddress: '', availableUntil: ''
-};
+const initial = { title: '', description: '', category: '', portions: '', district: '', pickupAddress: '', contactPhone: '', availableUntil: '' };
+const isFuture = (value) => new Date(value).getTime() > Date.now();
 
-function isFuture(dateStr){
-  const d = new Date(dateStr);
-  return d.toString() !== 'Invalid Date' && d.getTime() > Date.now();
-}
-
-export default function CreateListingForm({ onSubmit }){
+export default function CreateListingForm({ onSubmit }) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
   const [submitError, setSubmitError] = useState('');
-
-  function validate(values){
-    const e = {};
-    if (!values.title || values.title.trim().length < 3) e.title = 'Title must be 3–100 characters.';
-    if (values.title && values.title.trim().length > 100) e.title = 'Title must be 3–100 characters.';
-    if (!values.description || values.description.trim().length < 10) e.description = 'Description must be 10–500 characters.';
-    if (values.description && values.description.trim().length > 500) e.description = 'Description must be 10–500 characters.';
-    if (!values.category) e.category = 'Category is required.';
-    const p = Number(values.portions);
-    if (!values.portions || !Number.isInteger(p) || p < 1 || p > 500) e.portions = 'Portions must be a whole number 1–500.';
-    if (!values.district) e.district = 'District is required.';
-    if (!values.pickupAddress || values.pickupAddress.trim().length < 5) e.pickupAddress = 'Address must be 5–200 characters.';
-    if (values.pickupAddress && values.pickupAddress.trim().length > 200) e.pickupAddress = 'Address must be 5–200 characters.';
-    if (!values.availableUntil || !isFuture(values.availableUntil)) e.availableUntil = 'Available-until must be a future date/time.';
-    return e;
-  }
-
-  function handleChange(e){
-    const { name, value } = e.target;
-    setForm(prev=> ({...prev, [name]: value}));
-    setErrors(prev=> ({...prev, [name]: undefined}));
-    setSuccess(''); setSubmitError('');
-  }
-
-  async function handleSubmit(e){
-    e.preventDefault();
-    const v = validate(form);
-    setErrors(v);
-    if (Object.keys(v).length) return;
-    setIsSubmitting(true);
-    setSubmitError(''); setSuccess('');
-    try{
-      if (onSubmit){
-        await onSubmit({
-          ...form,
-          portions: Number(form.portions)
-        });
-      } else {
-        // fallback: simulate network
-        await new Promise(r=>setTimeout(r,500));
-      }
-      setSuccess('Listing created successfully.');
-      setForm(initial);
-    }catch(err){
-      setSubmitError(err?.message || 'Submission failed.');
-    }finally{
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <div className="sb-form-row">
-        <label>Title</label>
-        <input name="title" value={form.title} onChange={handleChange} />
-        {errors.title && <div className="sb-error">{errors.title}</div>}
-      </div>
-
-      <div className="sb-form-row">
-        <label>Description</label>
-        <textarea name="description" value={form.description} onChange={handleChange} />
-        {errors.description && <div className="sb-error">{errors.description}</div>}
-      </div>
-
-      <div style={{display:'flex',gap:8}}>
-        <div style={{flex:1}} className="sb-form-row">
-          <label>Category</label>
-          <input name="category" value={form.category} onChange={handleChange} />
-          {errors.category && <div className="sb-error">{errors.category}</div>}
-        </div>
-        <div style={{width:140}} className="sb-form-row">
-          <label>Portions</label>
-          <input name="portions" value={form.portions} onChange={handleChange} />
-          {errors.portions && <div className="sb-error">{errors.portions}</div>}
-        </div>
-      </div>
-
-      <div style={{display:'flex',gap:8}}>
-        <div style={{flex:1}} className="sb-form-row">
-          <label>District</label>
-          <input name="district" value={form.district} onChange={handleChange} />
-          {errors.district && <div className="sb-error">{errors.district}</div>}
-        </div>
-        <div style={{flex:1}} className="sb-form-row">
-          <label>Pickup Address</label>
-          <input name="pickupAddress" value={form.pickupAddress} onChange={handleChange} />
-          {errors.pickupAddress && <div className="sb-error">{errors.pickupAddress}</div>}
-        </div>
-      </div>
-
-      <div className="sb-form-row">
-        <label>Available Until</label>
-        <input type="datetime-local" name="availableUntil" value={form.availableUntil} onChange={handleChange} />
-        {errors.availableUntil && <div className="sb-error">{errors.availableUntil}</div>}
-      </div>
-
-      <div style={{display:'flex',gap:8,alignItems:'center'}}>
-        <button type="submit" disabled={isSubmitting}>{isSubmitting? 'Sending...':'Create listing'}</button>
-        {success && <div className="sb-success">{success}</div>}
-        {submitError && <div className="sb-error">{submitError}</div>}
-      </div>
-    </form>
-  );
+  const validate = (values) => {
+    const result = {};
+    if (values.title.trim().length < 3 || values.title.trim().length > 100) result.title = 'Use 3–100 characters.';
+    if (values.description.trim().length < 10 || values.description.trim().length > 500) result.description = 'Use 10–500 characters.';
+    if (!values.category) result.category = 'Choose a category.';
+    if (!Number.isInteger(Number(values.portions)) || Number(values.portions) < 1 || Number(values.portions) > 500) result.portions = 'Enter a whole number from 1–500.';
+    if (!values.district.trim()) result.district = 'Enter the district.';
+    if (values.pickupAddress.trim().length < 5 || values.pickupAddress.trim().length > 200) result.pickupAddress = 'Use 5–200 characters.';
+    if (!/^\+?[0-9\s-]{9,15}$/.test(values.contactPhone.trim())) result.contactPhone = 'Enter a valid phone number (9–15 digits).';
+    if (!isFuture(values.availableUntil)) result.availableUntil = 'Choose a future date and time.';
+    return result;
+  };
+  const change = (event) => { const { name, value } = event.target; setForm((current) => ({ ...current, [name]: value })); setErrors((current) => ({ ...current, [name]: undefined })); setSuccess(''); setSubmitError(''); };
+  const submit = async (event) => {
+    event.preventDefault(); const nextErrors = validate(form); setErrors(nextErrors); if (Object.keys(nextErrors).length) return;
+    setIsSubmitting(true); setSubmitError('');
+    try { await onSubmit?.({ ...form, portions: Number(form.portions) }); setSuccess('Your food listing is now live.'); setForm(initial); } catch (error) { setSubmitError(error?.message || 'Submission failed.'); } finally { setIsSubmitting(false); }
+  };
+  return <form onSubmit={submit} noValidate>
+    <div className="sb-form-row"><label htmlFor="listing-title">Food title</label><input id="listing-title" name="title" placeholder="e.g. Fresh vegetable rice packs" maxLength="100" value={form.title} onChange={change} />{errors.title && <div className="sb-error">{errors.title}</div>}</div>
+    <div className="sb-form-row"><label htmlFor="listing-description">Description</label><textarea id="listing-description" name="description" placeholder="Briefly describe the food, ingredients, and any collection notes." maxLength="500" value={form.description} onChange={change} />{errors.description && <div className="sb-error">{errors.description}</div>}</div>
+    <div className="sb-form-grid category-portions"><div className="sb-form-row"><label htmlFor="listing-category">Category</label><select id="listing-category" name="category" value={form.category} onChange={change}><option value="">Choose a category</option><option>Meals</option><option>Bakery</option><option>Produce</option><option>Other</option></select>{errors.category && <div className="sb-error">{errors.category}</div>}</div><div className="sb-form-row"><label htmlFor="listing-portions">Portions</label><input id="listing-portions" type="number" min="1" max="500" name="portions" placeholder="e.g. 12" value={form.portions} onChange={change} />{errors.portions && <div className="sb-error">{errors.portions}</div>}</div></div>
+    <div className="sb-form-grid"><div className="sb-form-row"><label htmlFor="listing-district">District</label><input id="listing-district" name="district" placeholder="e.g. Colombo" value={form.district} onChange={change} />{errors.district && <div className="sb-error">{errors.district}</div>}</div><div className="sb-form-row"><label htmlFor="listing-address">Pickup address</label><input id="listing-address" name="pickupAddress" placeholder="e.g. 15 Flower Road, Colombo 07" maxLength="200" value={form.pickupAddress} onChange={change} />{errors.pickupAddress && <div className="sb-error">{errors.pickupAddress}</div>}</div></div>
+    <div className="sb-form-grid"><div className="sb-form-row"><label htmlFor="listing-phone">Contact phone number</label><input id="listing-phone" type="tel" name="contactPhone" placeholder="e.g. +94 77 123 4567" inputMode="tel" value={form.contactPhone} onChange={change} />{errors.contactPhone && <div className="sb-error">{errors.contactPhone}</div>}</div><div className="sb-form-row"><label htmlFor="listing-until">Available until</label><input id="listing-until" type="datetime-local" name="availableUntil" value={form.availableUntil} onChange={change} />{errors.availableUntil && <div className="sb-error">{errors.availableUntil}</div>}</div></div>
+    <div className="sb-submit-row"><button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Publishing…' : 'Create listing'}</button>{success && <div className="sb-success">{success}</div>}{submitError && <div className="sb-error">{submitError}</div>}</div>
+  </form>;
 }

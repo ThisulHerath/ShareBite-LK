@@ -1,54 +1,30 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import ListingCard from './ListingCard';
 import './listings.css';
 import { mockListings as defaultMock } from '../../data/mockListings';
 
-export default function ListingBrowser({ listings: externalListings, onReserve }) {
+export default function ListingBrowser({ listings: externalListings, onReserve, reserveDisabled }) {
   const listings = externalListings ?? defaultMock;
   const [query, setQuery] = useState('');
   const [district, setDistrict] = useState('');
   const [category, setCategory] = useState('');
-
-  const districts = useMemo(() => Array.from(new Set(listings.map(l => l.district))), [listings]);
-  const categories = useMemo(() => Array.from(new Set(listings.map(l => l.category))), [listings]);
-
+  const districts = useMemo(() => Array.from(new Set(listings.map((item) => item.district))), [listings]);
+  const categories = useMemo(() => Array.from(new Set(listings.map((item) => item.category))), [listings]);
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return listings.filter(l => {
-      if (district && l.district !== district) return false;
-      if (category && l.category !== category) return false;
-      if (!q) return true;
-      return (l.title + ' ' + (l.description||'')).toLowerCase().includes(q);
-    });
+    const term = query.trim().toLowerCase();
+    return listings.filter((item) => (!district || item.district === district) && (!category || item.category === category) && (!term || `${item.title} ${item.description || ''}`.toLowerCase().includes(term)));
   }, [listings, query, district, category]);
+  const clear = () => { setQuery(''); setDistrict(''); setCategory(''); };
 
-  return (
-    <div>
-      <div className="sb-filters">
-        <input aria-label="Search listings" placeholder="Search title or description" value={query} onChange={e=>setQuery(e.target.value)} />
-
-        <select value={district} onChange={e=>setDistrict(e.target.value)}>
-          <option value="">All districts</option>
-          {districts.map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
-
-        <select value={category} onChange={e=>setCategory(e.target.value)}>
-          <option value="">All categories</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-
-        <button onClick={() => { setQuery(''); setDistrict(''); setCategory(''); }}>Clear</button>
+  return <div>
+    <div className="sb-filters" aria-label="Filter food listings">
+      <div className="sb-search"><span aria-hidden="true">⌕</span><input aria-label="Search listings" placeholder="Search food, category, or description" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
+      <div className="sb-filter-controls">
+        <select aria-label="Filter by district" value={district} onChange={(event) => setDistrict(event.target.value)}><option value="">All districts</option>{districts.map((item) => <option key={item} value={item}>{item}</option>)}</select>
+        <select aria-label="Filter by category" value={category} onChange={(event) => setCategory(event.target.value)}><option value="">All categories</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select>
+        <button className="sb-clear" type="button" onClick={clear}>Clear filters</button>
       </div>
-
-      {filtered.length === 0 ? (
-        <div style={{padding:20}}>No listings match your search or filters. Try different keywords or clear filters.</div>
-      ) : (
-        <div className="sb-listings-grid">
-          {filtered.map(l => (
-            <ListingCard key={l.id} listing={l} onReserve={onReserve} />
-          ))}
-        </div>
-      )}
     </div>
-  );
+    {filtered.length === 0 ? <div className="sb-empty-filter"><span aria-hidden="true">⌕</span><h2>Nothing matches yet</h2><p>Try a different search or clear your filters to see all available food.</p><button className="sb-clear" type="button" onClick={clear}>Show all listings</button></div> : <div className="sb-listings-grid">{filtered.map((listing) => <ListingCard key={listing.id} listing={listing} onReserve={onReserve} reserveDisabled={reserveDisabled} />)}</div>}
+  </div>;
 }

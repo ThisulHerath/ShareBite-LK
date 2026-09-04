@@ -10,6 +10,8 @@ export const getCurrentUser = (token) =>
   api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
 
 export const getListings = () => api.get('/api/listings')
+export const getMyListings = (token) =>
+  api.get('/api/listings/mine', { headers: { Authorization: `Bearer ${token}` } })
 export const createListing = (listing, token) =>
   api.post('/api/listings', listing, { headers: { Authorization: `Bearer ${token}` } })
 export const reserveListing = (id, token) =>
