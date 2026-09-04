@@ -39,6 +39,11 @@ export default function LandingPage({ user, onLogout }) {
             <p className="kicker">Small actions, meaningful impact</p>
             <h2>When good food goes unused, everyone loses.</h2>
             <p>Every day, food businesses may have perfectly usable items left after service, while households and community organisations are looking for affordable meal options. ShareBite LK gives that food a practical, local path forward.</p>
+            <div className="problem-signals" aria-label="How ShareBite helps">
+              <article><span aria-hidden="true">01</span><strong>Safe surplus</strong><p>Good food stays useful.</p></article>
+              <article><span aria-hidden="true">02</span><strong>Nearby first</strong><p>Shorter journeys, easier pickups.</p></article>
+              <article><span aria-hidden="true">03</span><strong>Shared with care</strong><p>More thoughtful local habits.</p></article>
+            </div>
           </div>
         </section>
 

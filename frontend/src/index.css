@@ -1,3 +1,4 @@
-:root { font-family: Inter, system-ui, sans-serif; color: #1e293b; background: #f8fafc; font-synthesis: none; }
+:root { font-family: Inter, system-ui, sans-serif; color: #1e293b; background: #102e2a; font-synthesis: none; }
 * { box-sizing: border-box; }
+html, body, #root { min-height: 100%; background: #102e2a; }
 body { margin: 0; }

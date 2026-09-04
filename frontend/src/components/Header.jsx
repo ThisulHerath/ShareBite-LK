@@ -4,9 +4,9 @@ import '../styles/sharebite.css'
 
 const navigationItems = [
   { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
   { label: 'Find Food', href: '/find-food' },
   { label: 'Share Food', href: '/share-food' },
-  { label: 'About', href: '/about' },
 ]
 
 /** A responsive site header. Pass user and onLogout when a session is available. */
