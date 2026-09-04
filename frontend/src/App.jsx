@@ -7,6 +7,7 @@ import StatusState from './components/StatusState'
 import Header from './components/Header'
 import CountdownTimer from './components/CountdownTimer'
 import PageBackground from './components/PageBackground'
+import ChatBot from './components/ChatBot'
 import { getRemainingTimeBreakdown } from './utils/timeUtils'
 import {
   apiErrorMessage,
@@ -1027,15 +1028,18 @@ export default function App() {
   const shared = { user: session?.user, token: session?.token, onLogout: logout }
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage {...shared} />} />
-      <Route path="/find-food" element={<ListingsPage session={session} onExpired={logout} onLogout={logout} />} />
-      <Route path="/share-food" element={<ShareFoodPage session={session} onExpired={logout} onLogout={logout} />} />
-      <Route path="/dashboard" element={<DashboardPage session={session} onLogout={logout} />} />
-      <Route path="/about" element={<ProblemPage {...shared} />} />
-      <Route path="/login" element={<AuthPage session={session} onSession={save} />} />
-      <Route path="/register" element={<AuthPage session={session} onSession={save} />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<LandingPage {...shared} />} />
+        <Route path="/find-food" element={<ListingsPage session={session} onExpired={logout} onLogout={logout} />} />
+        <Route path="/share-food" element={<ShareFoodPage session={session} onExpired={logout} onLogout={logout} />} />
+        <Route path="/dashboard" element={<DashboardPage session={session} onLogout={logout} />} />
+        <Route path="/about" element={<ProblemPage {...shared} />} />
+        <Route path="/login" element={<AuthPage session={session} onSession={save} />} />
+        <Route path="/register" element={<AuthPage session={session} onSession={save} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <ChatBot />
+    </>
   )
 }
