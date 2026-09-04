@@ -8,6 +8,10 @@ export const registerUser = (data) => api.post('/api/auth/register', data)
 export const loginUser = (data) => api.post('/api/auth/login', data)
 export const getCurrentUser = (token) =>
   api.get('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+export const changePassword = (data, token) =>
+  api.patch('/api/auth/password', data, { headers: { Authorization: `Bearer ${token}` } })
+export const deleteAccount = (data, token) =>
+  api.delete('/api/auth/account', { data, headers: { Authorization: `Bearer ${token}` } })
 
 export const getListings = () => api.get('/api/listings')
 export const getMyListings = (token) =>

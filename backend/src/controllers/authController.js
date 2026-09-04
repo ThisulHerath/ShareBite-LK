@@ -37,4 +37,36 @@ const getCurrentUser = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
-module.exports = { getCurrentUser, login, register }
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body
+    if (!currentPassword || !newPassword) return res.status(400).json({ message: 'Current and new passwords are required.' })
+    if (newPassword.length < 6) return res.status(400).json({ message: 'New password must be at least 6 characters.' })
+
+    const user = await User.findById(req.userId)
+    if (!user || !(await bcrypt.compare(currentPassword, user.password))) return res.status(401).json({ message: 'Current password is incorrect.' })
+    user.password = await bcrypt.hash(newPassword, 12)
+    await user.save()
+    return res.json({ message: 'Password changed successfully.' })
+  } catch (error) { next(error) }
+}
+
+const deleteAccount = async (req, res, next) => {
+  try {
+    const { password, confirmation } = req.body
+    if (!password || confirmation !== 'DELETE') return res.status(400).json({ message: 'Enter your password and type DELETE to confirm.' })
+
+    const user = await User.findById(req.userId)
+    if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ message: 'Password is incorrect.' })
+
+    const Listing = require('../models/Listing')
+    await Promise.all([
+      Listing.deleteMany({ sharedBy: req.userId }),
+      Listing.updateMany({ reservedBy: req.userId }, { $set: { reservedBy: null, status: 'available' } }),
+      User.deleteOne({ _id: req.userId }),
+    ])
+    return res.json({ message: 'Account deleted successfully.' })
+  } catch (error) { next(error) }
+}
+
+module.exports = { changePassword, deleteAccount, getCurrentUser, login, register }
