@@ -1,0 +1,25 @@
+.sb-listings-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+.sb-listing-card{
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.sb-listing-title{font-weight:600;font-size:1.05rem}
+.sb-listing-meta{color:#6b7280;font-size:0.88rem}
+.sb-badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:0.75rem}
+.sb-available{background:#dcfce7;color:#065f46}
+.sb-reserved{background:#fee2e2;color:#991b1b}
+.sb-reserve-btn{margin-top:8px;padding:8px 10px;border-radius:6px;border:none;background:#0ea5a4;color:white;cursor:pointer}
+.sb-reserve-btn[disabled]{opacity:0.6;cursor:not-allowed}
+.sb-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sb-form-row{display:flex;flex-direction:column;margin-bottom:8px}
+.sb-error{color:#b91c1c;font-size:0.9rem}
+.sb-success{color:#065f46;font-size:0.95rem}
