@@ -73,12 +73,17 @@ const createListing = async (req, res, next) => {
 
 const reserveListing = async (req, res, next) => {
   try {
-    const listing = await Listing.findById(req.params.id)
-    if (!listing) return res.status(404).json({ message: 'Listing not found.' })
-    if (listing.status !== 'available') return res.status(409).json({ message: 'Sorry, this listing has already been reserved.' })
-
-    listing.status = 'reserved'
-    await listing.save()
+    const listing = await Listing.findOneAndUpdate(
+      { _id: req.params.id, status: 'available' },
+      { status: 'reserved' },
+      { new: true },
+    )
+    if (!listing) {
+      if (await Listing.exists({ _id: req.params.id })) {
+        return res.status(409).json({ message: 'Sorry, this listing has already been reserved.' })
+      }
+      return res.status(404).json({ message: 'Listing not found.' })
+    }
     return res.json({ listing })
   } catch (error) {
     if (error.name === 'CastError') return res.status(404).json({ message: 'Listing not found.' })
