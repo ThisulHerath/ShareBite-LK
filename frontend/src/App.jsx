@@ -9,6 +9,8 @@ import CountdownTimer from './components/CountdownTimer'
 import PageBackground from './components/PageBackground'
 import ChatBot from './components/ChatBot'
 import { getRemainingTimeBreakdown } from './utils/timeUtils'
+import { useLocale } from './i18n/LocaleContext'
+import { ROLE_LABELS, SRI_LANKA_DISTRICTS } from './data/sriLanka'
 import {
   apiErrorMessage,
   cancelReservation,
@@ -44,11 +46,12 @@ const containerStyle = { maxWidth: '1100px', margin: '0 auto', padding: '40px 24
 
 /* --- AUTH PAGE (LOGIN & REGISTER) --- */
 function AuthPage({ session, onSession }) {
+  const { t } = useLocale()
   const location = useLocation()
   const navigate = useNavigate()
   const isRegister = location.pathname === '/register'
 
-  const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'recipient', district: '' })
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -57,6 +60,10 @@ function AuthPage({ session, onSession }) {
 
   const submit = async (event) => {
     event.preventDefault()
+    if (isRegister && !/^(?=.*[A-Za-z])(?=.*\d).{8,72}$/.test(form.password)) {
+      setMessage('Password must be 8–72 characters and include a letter and a number.')
+      return
+    }
     setLoading(true)
     setMessage('')
     try {
@@ -139,19 +146,19 @@ function AuthPage({ session, onSession }) {
           }}
         >
           <span style={{ color: '#176B59', fontWeight: '700', fontSize: '0.8rem', textTransform: 'uppercase' }}>
-            {isRegister ? 'Get Started' : 'Welcome Back'}
+            {isRegister ? t('getStarted') : t('welcomeBack')}
           </span>
           <h2 style={{ color: '#104C40', margin: '4px 0 8px 0', fontSize: '1.75rem', fontWeight: '800' }}>
-            {isRegister ? 'Create Your Account' : 'Log in to ShareBite'}
+            {isRegister ? t('createAccount') : `${t('login')} · ShareBite LK`}
           </h2>
           <p style={{ color: '#5D706B', fontSize: '0.875rem', marginBottom: '24px' }}>
-            {isRegister ? 'Register to share or reserve safe surplus food.' : 'Sign in to share food or reserve a listing.'}
+            {isRegister ? t('authRegisterText') : t('authLoginText')}
           </p>
 
           <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {isRegister && (
               <div>
-                <label style={{ fontSize: '0.875rem', fontWeight: '700', color: '#104C40' }}>Full Name</label>
+                <label style={{ fontSize: '0.875rem', fontWeight: '700', color: '#104C40' }}>{t('fullName')}</label>
                 <input
                   required
                   minLength={2}
@@ -164,8 +171,25 @@ function AuthPage({ session, onSession }) {
               </div>
             )}
 
+            {isRegister && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '0.875rem', fontWeight: '700', color: '#104C40' }}>{t('accountType')}</label>
+                <select required value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} style={inputStyle}>
+                  <option value="recipient">{t('recipient')}</option>
+                  <option value="donor">{t('donor')}</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '0.875rem', fontWeight: '700', color: '#104C40' }}>{t('district')}</label>
+                <select required value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} style={inputStyle}>
+                  <option value="">Select</option>
+                  {SRI_LANKA_DISTRICTS.map((district) => <option key={district} value={district}>{district}</option>)}
+                </select>
+              </div>
+            </div>}
+
             <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: '700', color: '#104C40' }}>Email Address</label>
+              <label style={{ fontSize: '0.875rem', fontWeight: '700', color: '#104C40' }}>{t('email')}</label>
               <input
                 required
                 type="email"
@@ -178,12 +202,12 @@ function AuthPage({ session, onSession }) {
             </div>
 
             <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: '700', color: '#104C40' }}>Password</label>
+              <label style={{ fontSize: '0.875rem', fontWeight: '700', color: '#104C40' }}>{t('password')}</label>
               <div style={{ position: 'relative' }}>
                 <input
                   required
                   type={showPassword ? 'text' : 'password'}
-                  minLength={6}
+                  minLength={isRegister ? 8 : 1}
                   autoComplete={isRegister ? 'new-password' : 'current-password'}
                   placeholder="Enter your password"
                   value={form.password}
@@ -226,7 +250,7 @@ function AuthPage({ session, onSession }) {
                 marginTop: '8px',
               }}
             >
-              {loading ? 'Please wait…' : isRegister ? 'Create Account' : 'Log In'}
+              {loading ? 'Please wait…' : isRegister ? t('submitRegister') : t('submitLogin')}
             </button>
           </form>
 
@@ -253,8 +277,14 @@ function AuthPage({ session, onSession }) {
   )
 }
 
+function AccessDenied({ session, onLogout }) {
+  const { t } = useLocale()
+  return <div style={pageStyle}><Header user={session?.user} token={session?.token} onLogout={onLogout} /><main style={{ ...containerStyle, maxWidth: '720px', textAlign: 'center', paddingTop: '90px' }}><div style={{ width: 56, height: 56, margin: '0 auto 18px', display: 'grid', placeItems: 'center', borderRadius: 16, background: '#D9ED89', color: '#104C40', fontWeight: 900 }}>!</div><h1 style={{ color: '#104C40' }}>{t('noPermissionTitle')}</h1><p style={{ color: '#5D706B', lineHeight: 1.7 }}>{t('noPermissionText')}</p><Link to="/dashboard" className="cta-primary" style={{ marginTop: 18 }}>{t('dashboard')} →</Link></main></div>
+}
+
 /* --- LISTINGS BROWSER PAGE --- */
 function ListingsPage({ session, onExpired, onLogout }) {
+  const { t } = useLocale()
   const navigate = useNavigate()
   const location = useLocation()
   const [listings, setListings] = useState([])
@@ -281,6 +311,7 @@ function ListingsPage({ session, onExpired, onLogout }) {
   }, [session?.token])
 
   if (!session?.token) return <Navigate to="/login" replace state={{ from: location }} />
+  if (!['recipient', 'admin'].includes(session.user?.role || 'recipient')) return <AccessDenied session={session} onLogout={onLogout} />
 
   const reserve = async (listing, portions = 1) => {
     if (reservingId) return
@@ -312,13 +343,13 @@ function ListingsPage({ session, onExpired, onLogout }) {
       <Header user={session.user} token={session.token} onLogout={onLogout} />
       <main className="listings-main-shell" style={{ ...containerStyle, position: 'relative', zIndex: 1 }}>
         <span style={{ color: '#176B59', fontWeight: '700', fontSize: '0.875rem', textTransform: 'uppercase' }}>
-          Available Today
+          {t('availableToday')}
         </span>
         <h1 style={{ fontSize: '2.25rem', fontWeight: '800', color: '#104C40', margin: '8px 0 12px 0' }}>
-          Find Food to Collect
+          {t('findTitle')}
         </h1>
         <p style={{ color: '#5D706B', marginBottom: '32px', fontSize: '1.05rem' }}>
-          Browse fresh surplus food shared by local businesses today. Reserve the exact portions you need before the collection deadline.
+          {t('findSubtitle')}
         </p>
 
         {feedback && state !== 'error' && (
@@ -734,6 +765,14 @@ function DashboardPage({ session, onLogout }) {
                 <span style={{ color: '#5D706B' }}>{user.email || '—'}</span>
               </div>
               <div>
+                <strong style={{ color: '#104C40' }}>Account Role:</strong>{' '}
+                <span style={{ color: '#5D706B' }}>{ROLE_LABELS[user.role] || ROLE_LABELS.recipient}</span>
+              </div>
+              <div>
+                <strong style={{ color: '#104C40' }}>Home District:</strong>{' '}
+                <span style={{ color: '#5D706B' }}>{user.district || 'Not set'}</span>
+              </div>
+              <div>
                 <strong style={{ color: '#104C40' }}>Member Since:</strong>{' '}
                 <span style={{ color: '#5D706B' }}>{joined}</span>
               </div>
@@ -749,7 +788,7 @@ function DashboardPage({ session, onLogout }) {
               Every safe listing and timely collection helps good food go further across Sri Lanka.
             </p>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <Link
+              {(user.role === 'donor' || user.role === 'admin') && <Link
                 to="/share-food"
                 style={{
                   backgroundColor: '#D9ED89',
@@ -762,8 +801,8 @@ function DashboardPage({ session, onLogout }) {
                 }}
               >
                 Share Surplus →
-              </Link>
-              <Link
+              </Link>}
+              {(user.role === 'recipient' || user.role === 'admin' || !user.role) && <Link
                 to="/find-food"
                 style={{
                   backgroundColor: '#176B59',
@@ -776,7 +815,7 @@ function DashboardPage({ session, onLogout }) {
                 }}
               >
                 Find Food →
-              </Link>
+              </Link>}
             </div>
           </article>
         </section>
@@ -793,6 +832,7 @@ function DashboardPage({ session, onLogout }) {
               {/* Shared Food Column */}
               <article
                 style={{
+                  display: user.role === 'recipient' || !user.role ? 'none' : 'block',
                   background: '#FFFDF8',
                   border: '1px solid #176B59',
                   borderRadius: '20px',
@@ -808,7 +848,7 @@ function DashboardPage({ session, onLogout }) {
                     alignItems: 'center',
                   }}
                 >
-                  <span>Food You Shared</span>
+                  <span>{user.role === 'admin' ? 'All Food Listings' : 'Food You Shared'}</span>
                   <span
                     style={{
                       background: '#D9ED89',
@@ -846,6 +886,7 @@ function DashboardPage({ session, onLogout }) {
               {/* Reserved Food Column */}
               <article
                 style={{
+                  display: user.role === 'donor' ? 'none' : 'block',
                   background: '#FFFDF8',
                   border: '1px solid #176B59',
                   borderRadius: '20px',
@@ -973,6 +1014,7 @@ function ShareFoodPage({ session, onExpired, onLogout }) {
   const location = useLocation()
 
   if (!session?.token) return <Navigate to="/login" replace state={{ from: location }} />
+  if (!['donor', 'admin'].includes(session.user?.role)) return <AccessDenied session={session} onLogout={onLogout} />
 
   const submit = async (listing) => {
     try {

@@ -2,6 +2,7 @@ const Listing = require('../models/Listing')
 
 const categories = ['Meals', 'Bakery', 'Produce', 'Other']
 const statuses = ['available', 'reserved']
+const districts = ['Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 'Mannar', 'Matale', 'Matara', 'Monaragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya']
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -31,17 +32,18 @@ const validateListing = (body) => {
   if (listing.description.length < 10 || listing.description.length > 500) return { message: 'Description must be between 10 and 500 characters.' }
   if (!categories.includes(listing.category)) return { message: 'Category must be one of: Meals, Bakery, Produce, or Other.' }
   if (!Number.isInteger(listing.portions) || listing.portions < 1 || listing.portions > 500) return { message: 'Portions must be a whole number between 1 and 500.' }
-  if (!listing.district) return { message: 'District is required.' }
+  if (!districts.includes(listing.district)) return { message: 'Choose a valid Sri Lankan district.' }
   if (listing.pickupAddress.length < 5 || listing.pickupAddress.length > 200) return { message: 'Pickup address must be between 5 and 200 characters.' }
-  if (!/^\+?[0-9\s-]{9,15}$/.test(listing.contactPhone)) return { message: 'Enter a valid phone number (9–15 digits).' }
+  const normalizedPhone = listing.contactPhone.replace(/[\s-]/g, '')
+  if (!/^(?:\+94|0)[1-9][0-9]{8}$/.test(normalizedPhone)) return { message: 'Enter a valid Sri Lankan phone number (for example 0771234567).' }
   
   const availableUntil = new Date(listing.availableUntil)
   const now = new Date()
-  if (Number.isNaN(availableUntil.getTime()) || availableUntil <= now) {
-    return { message: 'Available until must be a future time today.' }
+  if (Number.isNaN(availableUntil.getTime()) || availableUntil.getTime() < now.getTime() + 15 * 60 * 1000) {
+    return { message: 'Collection deadline must be at least 15 minutes from now.' }
   }
 
-  return { listing: { ...listing, availableUntil } }
+  return { listing: { ...listing, contactPhone: normalizedPhone, availableUntil } }
 }
 
 const formatListingDoc = (doc) => {
@@ -101,7 +103,7 @@ const updateListing = async (req, res, next) => {
   try {
     const listing = await Listing.findById(req.params.id)
     if (!listing) return res.status(404).json({ message: 'Listing not found.' })
-    if (listing.sharedBy?.toString() !== req.userId) {
+    if (req.user?.role !== 'admin' && listing.sharedBy?.toString() !== req.userId) {
       return res.status(403).json({ message: 'You are not authorized to edit this listing.' })
     }
 
@@ -142,7 +144,7 @@ const deleteListing = async (req, res, next) => {
   try {
     const listing = await Listing.findById(req.params.id)
     if (!listing) return res.status(404).json({ message: 'Listing not found.' })
-    if (listing.sharedBy?.toString() !== req.userId) {
+    if (req.user?.role !== 'admin' && listing.sharedBy?.toString() !== req.userId) {
       return res.status(403).json({ message: 'You are not authorized to delete this listing.' })
     }
 
@@ -156,8 +158,9 @@ const deleteListing = async (req, res, next) => {
 
 const getMyListings = async (req, res, next) => {
   try {
+    const sharedFilter = req.user?.role === 'admin' ? {} : { sharedBy: req.userId }
     const [sharedDocs, reservedDocs] = await Promise.all([
-      Listing.find({ sharedBy: req.userId }).sort({ createdAt: -1 }),
+      Listing.find(sharedFilter).sort({ createdAt: -1 }),
       Listing.find({
         $or: [
           { 'reservations.user': req.userId },
@@ -193,6 +196,10 @@ const reserveListing = async (req, res, next) => {
     const listing = await Listing.findById(req.params.id)
     if (!listing) return res.status(404).json({ message: 'Listing not found.' })
 
+    if (listing.sharedBy?.toString() === req.userId) {
+      return res.status(400).json({ message: 'You cannot reserve your own food listing.' })
+    }
+
     const now = new Date()
     if (new Date(listing.availableUntil) <= now) {
       return res.status(400).json({ message: 'This food listing has already expired.' })
@@ -205,7 +212,10 @@ const reserveListing = async (req, res, next) => {
       return res.status(409).json({ message: 'Sorry, this listing has already been fully reserved.' })
     }
 
-    const requestedPortions = Number(req.body.portions) > 0 ? Math.floor(Number(req.body.portions)) : 1
+    const requestedPortions = Number(req.body.portions ?? 1)
+    if (!Number.isInteger(requestedPortions) || requestedPortions < 1 || requestedPortions > 500) {
+      return res.status(400).json({ message: 'Reservation portions must be a whole number between 1 and 500.' })
+    }
     if (requestedPortions > listing.remainingPortions) {
       return res.status(400).json({
         message: `Only ${listing.remainingPortions} portion${listing.remainingPortions === 1 ? '' : 's'} remaining.`,

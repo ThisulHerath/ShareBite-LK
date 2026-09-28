@@ -13,11 +13,22 @@ Businesses post clear, time-bound surplus-food listings. People and community gr
 ## Features
 
 - Register and log in securely with JWT authentication.
+- Role-based access for food donors, food recipients, and administrators, enforced by both the interface and API.
+- English and Sinhala interface with a persistent language preference.
 - Create validated surplus-food listings.
 - Browse, search, and filter available listings by keyword, district, and category.
 - Reserve an available listing; already-reserved listings cannot be claimed again.
 - Clear loading, empty, network-error, validation, authentication, and reservation feedback.
 - Responsive mobile layout and SPA routing for direct page loads.
+- Sri Lanka-specific validation for all 25 districts and local phone-number formats.
+
+## Account roles
+
+- **Food donor** — creates, edits, and removes their own surplus-food listings.
+- **Food recipient** — browses food, reserves portions, and manages reservations.
+- **Administrator** — can use donor and recipient operations and moderate any listing.
+
+Public registration only permits donor and recipient accounts. Set an account's `role` to `admin` directly in the database for trusted platform administrators.
 
 ## Stack
 

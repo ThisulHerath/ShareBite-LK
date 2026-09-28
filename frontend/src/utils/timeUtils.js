@@ -77,7 +77,7 @@ export function getRemainingTimeBreakdown(targetDate) {
   const isLastHour = diffMs < 60 * 60 * 1000
   const isWarning = diffMs >= 60 * 60 * 1000 && diffMs < 2 * 60 * 60 * 1000
 
-  let text = ''
+  let text
   if (hours > 0) {
     text = `${hours}h ${minutes}m left`
   } else if (minutes > 0) {

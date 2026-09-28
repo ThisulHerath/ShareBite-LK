@@ -9,11 +9,17 @@ const listingRoutes = require('./routes/listingRoutes')
 
 const app = express()
 
-// Allow requests from any frontend
-app.use(cors())
+const allowedOrigins = (process.env.CLIENT_URL || '').split(',').map((item) => item.trim()).filter(Boolean)
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin)) return callback(null, true)
+    return callback(new Error('This origin is not allowed by CORS.'))
+  },
+  credentials: true,
+}))
 
 // Parse JSON request body
-app.use(express.json())
+app.use(express.json({ limit: '100kb' }))
 
 // Health check
 app.get('/api/health', (req, res) => {

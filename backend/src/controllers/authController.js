@@ -3,17 +3,35 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/User')
 
 const createToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
-const userPayload = (user, token) => ({ token, user: { id: user._id, name: user.name, email: user.email } })
+const districts = ['Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara', 'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 'Mannar', 'Matale', 'Matara', 'Monaragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya']
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+const strongPassword = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/
+const userPayload = (user, token) => ({
+  token,
+  user: {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role || 'recipient',
+    district: user.district || '',
+    createdAt: user.createdAt,
+  },
+})
 
 const register = async (req, res, next) => {
   try {
     const name = req.body.name?.trim()
     const email = req.body.email?.trim().toLowerCase()
     const { password } = req.body
-    if (!name || !email || !password) return res.status(400).json({ message: 'Name, email, and password are required.' })
-    if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters.' })
+    const role = req.body.role === 'donor' ? 'donor' : 'recipient'
+    const district = req.body.district?.trim() || ''
+    if (!name || !email || !password || !district) return res.status(400).json({ message: 'Name, email, password, and district are required.' })
+    if (name.length < 2 || name.length > 60) return res.status(400).json({ message: 'Name must be between 2 and 60 characters.' })
+    if (!emailPattern.test(email)) return res.status(400).json({ message: 'Enter a valid email address.' })
+    if (!strongPassword.test(password)) return res.status(400).json({ message: 'Password must be 8–72 characters and include a letter and a number.' })
+    if (!districts.includes(district)) return res.status(400).json({ message: 'Choose a valid Sri Lankan district.' })
     if (await User.exists({ email })) return res.status(409).json({ message: 'An account with that email already exists.' })
-    const user = await User.create({ name, email, password: await bcrypt.hash(password, 12) })
+    const user = await User.create({ name, email, password: await bcrypt.hash(password, 12), role, district })
     return res.status(201).json(userPayload(user, createToken(user._id.toString())))
   } catch (error) { next(error) }
 }
@@ -31,9 +49,9 @@ const login = async (req, res, next) => {
 
 const getCurrentUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.userId).select('-password')
+    const user = req.user || await User.findById(req.userId).select('-password')
     if (!user) return res.status(404).json({ message: 'User not found.' })
-    return res.json({ user })
+    return res.json({ user: userPayload(user).user })
   } catch (error) { next(error) }
 }
 
@@ -41,7 +59,7 @@ const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body
     if (!currentPassword || !newPassword) return res.status(400).json({ message: 'Current and new passwords are required.' })
-    if (newPassword.length < 6) return res.status(400).json({ message: 'New password must be at least 6 characters.' })
+    if (!strongPassword.test(newPassword)) return res.status(400).json({ message: 'New password must be 8–72 characters and include a letter and a number.' })
 
     const user = await User.findById(req.userId)
     if (!user || !(await bcrypt.compare(currentPassword, user.password))) return res.status(401).json({ message: 'Current password is incorrect.' })

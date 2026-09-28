@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { combineTodayWithTime, getTodayFormattedLabel, isTodayTimeInFuture } from '../../utils/timeUtils'
+import { SRI_LANKA_DISTRICTS } from '../../data/sriLanka'
 
 const initial = {
   title: '',
@@ -48,9 +49,10 @@ export default function CreateListingForm({ onSubmit, initialValues = null, isEd
     if (values.description.trim().length < 10 || values.description.trim().length > 500) result.description = 'Use 10–500 characters.'
     if (!values.category) result.category = 'Choose a category.'
     if (!Number.isInteger(Number(values.portions)) || Number(values.portions) < 1 || Number(values.portions) > 500) result.portions = 'Enter a whole number from 1–500.'
-    if (!values.district.trim()) result.district = 'Enter the district.'
+    if (!SRI_LANKA_DISTRICTS.includes(values.district)) result.district = 'Choose a valid Sri Lankan district.'
     if (values.pickupAddress.trim().length < 5 || values.pickupAddress.trim().length > 200) result.pickupAddress = 'Use 5–200 characters.'
-    if (!/^\+?[0-9\s-]{9,15}$/.test(values.contactPhone.trim())) result.contactPhone = 'Enter a valid phone number (9–15 digits).'
+    const normalizedPhone = values.contactPhone.trim().replace(/[\s-]/g, '')
+    if (!/^(?:\+94|0)[1-9][0-9]{8}$/.test(normalizedPhone)) result.contactPhone = 'Use a Sri Lankan number such as 0771234567.'
     
     if (!values.availableTime) {
       result.availableTime = 'Please specify the collection cutoff time for today.'
@@ -203,7 +205,10 @@ export default function CreateListingForm({ onSubmit, initialValues = null, isEd
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
           <div>
             <label htmlFor="listing-district" style={labelStyle}>District</label>
-            <input id="listing-district" name="district" placeholder="e.g. Colombo" value={form.district} onChange={change} style={getInputStyle(errors.district)} />
+            <select id="listing-district" name="district" value={form.district} onChange={change} style={getInputStyle(errors.district)}>
+              <option value="">Choose a district</option>
+              {SRI_LANKA_DISTRICTS.map((district) => <option key={district} value={district}>{district}</option>)}
+            </select>
             {errors.district && <div style={errorStyle}>{errors.district}</div>}
           </div>
 

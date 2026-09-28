@@ -2,15 +2,14 @@ import { useEffect, useState } from 'react'
 import { getRemainingTimeBreakdown } from '../utils/timeUtils'
 
 export default function CountdownTimer({ targetDate, compact = false, showLabel = true }) {
-  const [breakdown, setBreakdown] = useState(() => getRemainingTimeBreakdown(targetDate))
+  const [, setTick] = useState(() => Date.now())
 
   useEffect(() => {
-    setBreakdown(getRemainingTimeBreakdown(targetDate))
-    const timer = setInterval(() => {
-      setBreakdown(getRemainingTimeBreakdown(targetDate))
-    }, 1000)
+    const timer = setInterval(() => setTick(Date.now()), 1000)
     return () => clearInterval(timer)
-  }, [targetDate])
+  }, [])
+
+  const breakdown = getRemainingTimeBreakdown(targetDate)
 
   const { isExpired, isLastHour, text, urgency } = breakdown
 
